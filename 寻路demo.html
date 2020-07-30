@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>上海中电</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <!--<meta itemprop="image" content="./images/fenxiang.png" />-->
+    <style>
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Hiragino Sans GB", "Microsoft Yahei", sans-serif;
+            background: #79a8ae;
+            color: #CFEBE4;
+            font-size: 18px;
+            line-height: 2;
+            letter-spacing: 1.2px;
+            margin: 0;
+        }
+
+        a {
+            color: #ebf7f4;
+        }
+
+        .body--ready {
+            background: -webkit-linear-gradient(top, rgb(145,167,208) 0%, rgb(246,202,201) 120%);
+            background: -moz-linear-gradient(top, rgb(145,167,208) 0%, rgb(246,202,201) 120%);
+            background: -o-linear-gradient(top, rgb(145,167,208) 0%, rgb(246,202,201) 120%);
+            background: -ms-linear-gradient(top, rgb(145,167,208) 0%, rgb(246,202,201) 120%);
+            background: linear-gradient(top, rgb(145,167,208) 0%, rgb(246,202,201) 120%);
+        }
+        .changeC {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+        }
+        .text {
+            position: fixed;
+            bottom: 100px;
+            text-align: center;
+            width: 100%;
+        }
+        .ds {
+          position: absolute;
+          left: 20px;
+          top: 20px;
+          font-size: 12px;
+          color: red;
+        }
+        .canvas {
+            margin: 0 auto;
+            display: block;
+        }
+        .canvas2 {
+            margin: 0 auto;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX( -50% );
+        }
+        img#logo {
+            width: 128px;
+            background-size: cover;
+            border-radius: 200px;
+            box-shadow: 0px 0px 40px rgba(63, 81, 181, 0.72);
+            border: 3px solid #00a0ff;
+            opacity: 1;
+            margin: 0 auto;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            transition: all 1.0s;
+        }
+
+        #logo:hover {
+            box-shadow: 0 0 10px #fff;
+            -webkit-box-shadow: 0 0 19px #fff;
+            transform: rotate(360deg);
+            -ms-transform: rotate(360deg); /* IE 9 */
+            -moz-transform: rotate(360deg); /* Firefox */
+            -webkit-transform: rotate(360deg); /* Safari 和 Chrome */
+            -o-transform: rotate(360deg); /* Opera */
+            filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+        }
+
+        .cs {
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            position: absolute;
+            text-align: center;
+        }
+
+        .text {
+            position: fixed;
+            bottom: 80px;
+            text-align: center;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .text-right {
+            position: fixed;
+            bottom: 50px;
+            text-align: right;
+            width: 100%;
+            font-weight: bold;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<canvas onclick='demo.states.canvasClick(event)'  class="canvas" width="1200" height="800"></canvas>
+
+<img src="https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2341024853,4220678078&fm=26&gp=0.jpg" style='width: 0; height: 0' class='img' alt="">
+
+
+<div class='changeC'>
+  <button onclick='demo.states.changeisP(true)'>标点</button>
+  <button onclick="demo.states.changeisL(true)">画线</button>
+  <button onclick='demo.states.changeZp(true)'>标记终点</button>
+</div>
+
+<div class='ds'>
+  <p> 先使用标点功能在地图上标记点位，会把第一个标点默认为起点(Start)</p>
+  <p>每个地图只有一个起点</p>
+  <p>点位标记完毕以后，使用画线功能标记能走的路线</p>
+  <p>每条路线第一个点默认为起点(Start)</p>
+  <p>每条路线画完之后，需要重新点击画线按钮</p>
+</div>
+
+<script language="javascript">
+  function change(val){
+    window.terminus = val
+  }
+</script>
+<script>
+  window.onload = () => {
+    var imgData =  document.getElementsByTagName('img')[0]
+    demo.init()
+  }
+  var demo = {
+    init: function(){
+    var imgData =  document.getElementsByTagName('img')[0]
+      var canvas = document.querySelector('.canvas'),
+          context = canvas.getContext('2d')
+      context.drawImage(imgData, 200, 200, 800, 600)
+    },
+    states: (function (){
+      var isP = false, // 是否标点状态
+          isL = false, // 是否画线状态
+          isstopP = false, // 是否画终点
+          startP = [], // 起点坐标
+          stopP = [], // 终点坐标
+          PointS = [], // 所有点位坐标
+          lines = [], // 有序点位的数组，根据画线顺序生成
+          canvas = document.querySelector('.canvas'),
+          context = canvas.getContext('2d'),
+          imgData =  document.getElementsByTagName('img')[0]
+      context.lineWidth = 4
+      return {
+        changeisP: function(v) {
+          isP = v
+          if (v) isL = isstopP = false
+        },
+        changeisL: function(v) {
+          isL = v
+          lines.push([[...startP]])
+          context.strokeStyle = this.getrandomColor()
+          if (v) isP = isstopP = false
+        },
+        changeZp: function (v) {
+          isstopP = v
+          if (v) isP = isL = false
+        },
+        canvasClick: function (e) {
+          if (isstopP) {
+            stopP = [e.offsetX, e.offsetY]
+            this.drawP(e.offsetX, e.offsetY)
+            this.render()
+          }
+          else if (isP) {
+            PointS.push([e.offsetX, e.offsetY])
+            this.drawP(e.offsetX, e.offsetY)
+          }
+          else if (isL) {
+            for (let p of PointS) {
+              if (Math.abs(p[0] - e.offsetX) < 8 && Math.abs(p[1] - e.offsetY) < 8) {
+                this.drawL(p[0], p[1])
+              }
+            }
+          }
+        },
+        drawP(x,y) {
+          context.beginPath()
+          context.fillStyle = "#FFA500"
+          if (!startP[0]) {
+            startP = [x, y]
+            context.fillStyle = "#54FF9F"
+          }
+          if (isstopP) {
+            context.clearRect(0,0,canvas.width, canvas.height)
+            context.drawImage(imgData, 200, 200, 800, 600)
+            context.fillStyle = "#FF3030"
+          }
+          context.arc(x, y, 8, Math.PI*2 ,0 ,true)
+          context.closePath()
+          context.fill()
+        },
+        drawL(x, y) {
+          let lineLast = lines[lines.length -1],
+              lastP = lineLast[lineLast.length - 1]
+          this.computps(lineLast, lastP, [x, y])
+          context.beginPath()
+          context.moveTo(lastP[0],lastP[1])
+          context.lineTo(x,y)
+          context.stroke()
+        },
+        getrandomColor(){
+          let [r,g,b] = [parseInt(Math.random() * 255), parseInt(Math.random() * 255), parseInt(Math.random() * 255)]
+          return `rgba(${r}, ${g}, ${b}, 1)`
+        },
+        computps(arr, p1, p2){
+          let [x1, y1] = p1, [x2, y2] = p2
+          let max = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1))
+          let intervalx = (x2 - x1) / max, intervaly = (y2 - y1) / max
+          for (let i = 0; i < max; i += 4) {
+            arr.push([x1 += intervalx * 4, y1 += intervaly * 4])
+          }
+          arr.push(p2)
+        },
+        render: function(){
+          if (!lines[0]) {
+            alert('没有画好线路')
+            return
+          }
+          let minDistance = 10000, point
+          // 遍历所有线路中所有的点，找到离目标最近的点，记录位置
+          for (let i = 0; i< lines.length; i ++) {
+            for (let j = 0; j < lines[i].length; j ++) {
+              let distance = Math.abs(lines[i][j][0] - stopP[0]) +  Math.abs(lines[i][j][1] - stopP[1])
+              if ( distance < minDistance) {
+                minDistance = distance
+                point = [i,j]
+              }
+            }
+          }
+          let drawLine = lines[point[0]].slice(0, point[1] + 1)
+          // 检查是否是闭环路线
+          let arr = lines[point[0]]
+          if ( arr[0][0] == arr[arr.length - 1][0] &&
+            arr[0][1] == arr[arr.length - 1][1] &&
+            point[1] * 2 > arr.length
+            ) {
+            drawLine = arr.slice(point[1], arr.length + 1).reverse()
+          }
+          demo.animation.drawLine(drawLine, stopP)
+        }
+      } 
+    })(),
+    animation: (function (){
+      let requestFrame =  window.requestAnimationFrame ||
+                          window.webkitRequestAnimationFrame ||
+                          window.mozRequestAnimationFrame ||
+                          window.oRequestAnimationFrame ||
+                          window.msRequestAnimationFrame ||
+                          function (callback) {
+                            window.setTimeout(callback, 1000 / 60)
+                          },
+          line,
+          index = 0,
+          canvas = document.querySelector('.canvas'),
+          context = canvas.getContext('2d')
+      return {
+        drawLine(arr, stopP) {
+          line = arr
+          line.push(stopP)
+          index = 0
+          requestFrame.call(window, this.draw.bind(this))
+        },
+        draw(){
+          if (index == line.length - 1) return
+          context.beginPath()
+          context.strokeStyle = "#FF3030"
+          context.moveTo(...line[index])
+          context.lineTo(...line[index + 1])
+          context.stroke()
+          index ++
+          requestFrame.call(window, this.draw.bind(this))
+        }
+      }
+    })()
+  }
+
+</script>
+</body>
+</html>
